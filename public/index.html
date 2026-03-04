@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ChinQue POS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --green: #4CAF50;
+    --green-dim: #2e7d32;
+    --bg: #0c0c0c;
+    --card: #161616;
+    --card2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #ffffff;
+    --text-dim: #888888;
+    --red: #ef5350;
+    --orange: #FF9800;
+    --blue: #2196F3;
+    --purple: #9C27B0;
+    --yellow: #FFC107;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .page-header {
+    padding: 16px 20px 12px;
+    font-size: 20px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  /* CONTENT */
+  .page-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    padding-bottom: 8px;
+  }
+
+  .page-content::-webkit-scrollbar { display: none; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    display: flex;
+    background: #111;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px 12px;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: color .2s;
+  }
+
+  .nav-btn.active { color: var(--green); }
+
+  .nav-btn svg { width: 22px; height: 22px; }
+
+  .nav-badge {
+    position: absolute;
+    top: 6px;
+    right: 50%;
+    transform: translateX(8px);
+    background: var(--green);
+    color: #000;
+    font-size: 9px;
+    font-weight: 800;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* PAGES */
+  .page { display: none; flex-direction: column; height: 100%; }
+  .page.active { display: flex; }
+
+  /* INPUTS */
+  input, textarea {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, textarea:focus { border-color: var(--green); }
+  input::placeholder, textarea::placeholder { color: var(--text-dim); }
+  textarea { resize: none; line-height: 1.5; }
+
+  /* BUTTONS */
+  .btn-green {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--green);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: opacity .2s;
+    flex: 1;
+  }
+  .btn-green:active { opacity: .8; }
+
+  .btn-red {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--red);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    border: 2px solid var(--red);
+    border-radius: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: opacity .2s;
+    flex: 0 0 auto;
+  }
+  .btn-red:active { opacity: .7; }
+
+  /* LABEL */
+  .label {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .sub-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  /* SECTION */
+  .section { margin-bottom: 18px; }
+
+  /* RECEIPT PREVIEW */
+  .receipt-box {
+    background: var(--card);
+    border: 1px solid var(--green-dim);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+  }
+
+  .receipt-copy {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+  }
+
+  .receipt-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    color: #ddd;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* CLOCK */
+  .clock-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .clock-time { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--green); font-weight: 700; }
+  .clock-date { font-size: 12px; color: var(--text-dim); }
+  .order-no { font-size: 13px; color: var(--text-dim); text-align: right; }
+  .order-no span { font-size: 28px; color: var(--text); font-weight: 800; }
+
+  /* ACTION BUTTONS ROW */
+  .action-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  /* PENDING ORDER CARD */
+  .order-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: border-color .2s;
+  }
+  .order-card.checked { border-color: var(--green); }
+  .order-card.aba { border-color: var(--blue); }
+  .order-card.split { border-color: var(--purple); }
+
+  .order-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .order-no-badge { color: var(--green); font-weight: 800; font-size: 16px; }
+  .order-total { font-weight: 700; font-size: 15px; }
+
+  .order-customer { font-size: 13px; color: #ccc; margin-bottom: 10px; }
+
+  .order-actions {
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+  }
+  .icon-btn:active { background: var(--border); }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .badge {
+    background: var(--green);
+    color: #000;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  /* DELIVERY CARD */
+  .driver-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .driver-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+  }
+
+  .driver-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .driver-no-orders {
+    color: var(--text-dim);
+    font-size: 12px;
+    text-align: center;
+    padding: 12px;
+  }
+
+  /* COMPLETED */
+  .completed-summary {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .summary-box {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .summary-label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+  .summary-val { font-size: 16px; font-weight: 700; }
+
+  /* CALCULATOR */
+  .calc-display {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: right;
+    margin-bottom: 4px;
+  }
+  .calc-result { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; min-height: 44px; }
+  .calc-history { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .calc-btn {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 18px 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .calc-btn:active { background: #333; }
+  .calc-btn.op { color: var(--green); }
+  .calc-btn.eq { background: var(--green); color: #000; border-color: var(--green); }
+  .calc-btn.eq:active { background: var(--green-dim); }
+
+  /* MORE TABS */
+  .more-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--card);
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .more-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border-radius: 8px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+  }
+  .more-tab.active { background: var(--card2); color: var(--green); }
+  .more-tab svg { width: 20px; height: 20px; }
+
+  /* CHECKER */
+  .checker-item {
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .checker-item.ok { background: rgba(76,175,80,.12); border: 1px solid rgba(76,175,80,.3); }
+  .checker-item.err { background: rgba(239,83,80,.12); border: 1px solid rgba(239,83,80,.4); }
+  .checker-item.warn { background: rgba(255,152,0,.1); border: 1px solid rgba(255,152,0,.3); }
+  .checker-item-name { font-size: 13px; font-weight: 600; }
+  .checker-item-price { font-family: 'JetBrains Mono', monospace; font-size: 12px; margin-top: 2px; }
+  .checker-err-text { font-size: 11px; color: var(--red); margin-top: 2px; font-style: italic; }
+
+  /* SETTINGS */
+  .settings-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .settings-item:active { opacity: .8; }
+  .settings-item-left { display: flex; align-items: center; gap: 12px; }
+  .settings-item-icon { font-size: 20px; }
+  .settings-item-label { font-size: 15px; font-weight: 700; }
+  .settings-item-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  .info-box {
+    background: rgba(76,175,80,.1);
+    border: 1px solid rgba(76,175,80,.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.5;
+    margin-top: 10px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    /* NOTE: display is controlled via inline style only — never set display here */
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 430px;
+    padding: 24px 20px;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+  /* DRIVER ORDERS */
+  .driver-order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .driver-order-name { font-size: 13px; font-weight: 600; }
+  .driver-order-total { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--green); }
+
+  .driver-complete-btn {
+    background: none;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* EXPORT BTN */
+  .export-btn {
+    background: var(--green);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 20px;
+    color: var(--text-dim);
+  }
+  .empty-state svg { opacity: .3; }
+  .empty-state p { font-size: 14px; }
+  .empty-state span { font-size: 12px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 200;
+    animation: toastIn .2s ease;
+    white-space: nowrap;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px) } to { opacity: 1; transform: translateX(-50%) translateY(0) } }
+
+  /* NOTEPAD */
+  .notepad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .notepad-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .tip-box {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 10px;
+  }
+
+  /* COMPLETED ORDER CARD */
+  .completed-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .completed-card.aba { border-color: var(--blue); }
+  .completed-card.cash { border-color: var(--green); }
+  .completed-card.checker { border-color: var(--orange); } /* new style for checker */
+
+  /* RECEIPT HEADER for editing */
+  .receipt-header-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button { display: none; }
+
+  /* payment type radio group */
+  .payment-radio-group {
+    display: flex;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .payment-radio {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .payment-radio input[type="radio"] {
+    width: auto;
+    margin-right: 4px;
+  }
+</style>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+
+<!-- PAGES -->
+<div id="page-receipt" class="page active">
+  <div class="page-header">Receipt</div>
+  <div class="page-content">
+    <div class="clock-row">
+      <div>
+        <div class="clock-time" id="clock">00:00:00</div>
+        <div class="clock-date" id="clock-date"></div>
+      </div>
+      <div class="order-no">ORDER #<br><span id="order-no-display">1</span></div>
+    </div>
+
+    <div class="section">
+      <label class="label">Customer Information</label>
+      <input type="text" id="customer-name" placeholder="Customer name" style="margin-bottom:8px">
+      <input type="text" id="customer-address" placeholder="Customer Address">
+    </div>
+
+    <div class="section">
+      <label class="label">Order Items</label>
+      <div class="sub-label">Format: "Item name 10k" or "5 Item 2k" or "Item (3) 1.5k"</div>
+      <textarea id="order-input" rows="6" placeholder="Coffee 5k&#10;Bread 3k&#10;2 Water 1k"></textarea>
+    </div>
+
+    <div class="section">
+      <label class="label">Notes (Optional)</label>
+      <input type="text" id="order-notes" placeholder="Special instructions or notes">
+    </div>
+
+    <div class="action-row">
+      <button class="btn-green" onclick="acceptReceipt()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Accept Receipt!
+      </button>
+      <button class="btn-red" onclick="clearReceipt()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <div id="receipt-preview-section" style="margin-top:18px;display:none">
+      <div class="section-header">
+        <span class="label" style="margin-bottom:0">Receipt Preview</span>
+      </div>
+      <div class="receipt-box">
+        <button class="receipt-copy" onclick="copyReceipt()" title="Copy">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+        <pre class="receipt-text" id="receipt-preview-text"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-pending" class="page">
+  <div class="page-header">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span>Pending</span>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="section-header">
+      <span class="label" style="margin-bottom:0">Pending Orders</span>
+      <span class="badge" id="pending-badge">0</span>
+    </div>
+    <div id="pending-list"></div>
+  </div>
+</div>
+
+<div id="page-delivery" class="page">
+  <div class="page-header">Delivery</div>
+  <div class="page-content">
+    <div class="section-header">
+      <span class="label" style="margin-bottom:0">Delivery Management</span>
+      <span class="badge" id="delivery-badge" style="background:var(--purple);color:#fff">0</span>
+    </div>
+    <div id="driver-list"></div>
+  </div>
+</div>
+
+<div id="page-completed" class="page">
+  <div class="page-header">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span>Completed</span>
+      <button class="export-btn" onclick="exportCompleted()" title="Export">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="completed-summary">
+      <div class="summary-box">
+        <div class="summary-label">💵 Cash</div>
+        <div class="summary-val" id="cash-total">៛ 0</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">💳 ABA</div>
+        <div class="summary-val" id="aba-total">៛ 0</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">🔍 Checker</div>
+        <div class="summary-val" id="checker-total">៛ 0</div>
+      </div>
+    </div>
+    <div id="completed-list"></div>
+  </div>
+</div>
+
+<div id="page-more" class="page">
+  <div class="page-header">More</div>
+  <div class="page-content">
+    <div class="more-tabs">
+      <button class="more-tab active" onclick="switchMoreTab('calculator')" id="tab-calculator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10" stroke-width="3"/><line x1="12" y1="10" x2="12" y2="10" stroke-width="3"/><line x1="16" y1="10" x2="16" y2="10" stroke-width="3"/><line x1="8" y1="14" x2="8" y2="14" stroke-width="3"/><line x1="12" y1="14" x2="12" y2="14" stroke-width="3"/><line x1="16" y1="14" x2="16" y2="14" stroke-width="3"/><line x1="8" y1="18" x2="8" y2="18" stroke-width="3"/><line x1="12" y1="18" x2="12" y2="18" stroke-width="3"/><line x1="16" y1="18" x2="16" y2="18" stroke-width="3"/></svg>
+        Calculator
+      </button>
+      <button class="more-tab" onclick="switchMoreTab('notepad')" id="tab-notepad">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Notepad
+      </button>
+      <button class="more-tab" onclick="switchMoreTab('checker')" id="tab-checker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        Checker
+      </button>
+      <button class="more-tab" onclick="switchMoreTab('settings')" id="tab-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+
+    <!-- CALCULATOR -->
+    <div id="more-calculator">
+      <div class="calc-display">
+        <div class="calc-result" id="calc-display">0</div>
+        <div class="calc-history" id="calc-history"></div>
+      </div>
+      <div class="calc-grid">
+        <button class="calc-btn op" onclick="calcInput('7')">7</button>
+        <button class="calc-btn op" onclick="calcInput('8')">8</button>
+        <button class="calc-btn op" onclick="calcInput('9')">9</button>
+        <button class="calc-btn op" onclick="calcOp('/')" style="color:var(--orange)">/</button>
+        <button class="calc-btn op" onclick="calcInput('4')">4</button>
+        <button class="calc-btn op" onclick="calcInput('5')">5</button>
+        <button class="calc-btn op" onclick="calcInput('6')">6</button>
+        <button class="calc-btn op" onclick="calcOp('*')" style="color:var(--orange)">*</button>
+        <button class="calc-btn op" onclick="calcInput('3')">3</button>
+        <button class="calc-btn op" onclick="calcInput('2')">2</button>
+        <button class="calc-btn op" onclick="calcInput('1')">1</button>
+        <button class="calc-btn op" onclick="calcOp('-')" style="color:var(--orange)">-</button>
+        <button class="calc-btn" onclick="calcClear()">C</button>
+        <button class="calc-btn" onclick="calcInput('0')">0</button>
+        <button class="calc-btn eq" onclick="calcEquals()">=</button>
+        <button class="calc-btn op" onclick="calcOp('+')" style="color:var(--orange)">+</button>
+        <button class="calc-btn" onclick="calcBackspace()" style="grid-column:span 4;font-size:20px">⌫</button>
+      </div>
+    </div>
+
+    <!-- NOTEPAD -->
+    <div id="more-notepad" style="display:none">
+      <div class="notepad-header">
+        <span class="label" style="margin-bottom:0">Cashier Notepad</span>
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);text-align:right">Pemakaian Kasir:</div>
+          <div class="notepad-total" id="notepad-total">៛ 0</div>
+        </div>
+      </div>
+      <textarea id="notepad-input" rows="14" placeholder="Enter cashier notes...&#10;&#10;Example:&#10;nes batu 1k&#10;nkopi 2k" oninput="updateNotepad()"></textarea>
+      <div class="tip-box">💡 Tip: Lines ending with 'k' (e.g., "10k") will be calculated automatically</div>
+    </div>
+
+    <!-- CHECKER -->
+    <div id="more-checker" style="display:none">
+      <label class="label">Order List Checker</label>
+      <div class="sub-label">Paste order lists to check for pricing errors and missing prices</div>
+      <textarea id="checker-input" rows="7" placeholder="Paste order list here..."></textarea>
+      <div class="action-row" style="margin-top:10px">
+        <button class="btn-green" onclick="checkOrders()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Check Orders
+        </button>
+        <button class="btn-red" onclick="clearChecker()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          Clear
+        </button>
+      </div>
+      <div id="checker-results" style="margin-top:14px"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="more-settings" style="display:none">
+      <label class="label">Settings</label>
+      <div class="settings-item" onclick="openOrderNoModal()">
+        <div class="settings-item-left">
+          <div class="settings-item-icon">🔢</div>
+          <div>
+            <div class="settings-item-label">Order Number</div>
+            <div class="settings-item-sub" id="settings-order-no">Current: #1</div>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="settings-item" onclick="openCurrencyModal()">
+        <div class="settings-item-left">
+          <div class="settings-item-icon">💰</div>
+          <div>
+            <div class="settings-item-label">Spare Currency</div>
+            <div class="settings-item-sub" id="settings-currency-sub">THB (฿) - Rate: 1 = 130 Riel</div>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="info-box">
+        ℹ️ Order numbers reset automatically every day. You can also manually reset them anytime.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+  <!-- BOTTOM NAV (fixed) -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="switchPage('receipt')" id="nav-receipt">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 2 6 22"/><polyline points="18 2 18 22"/><polyline points="2 6 22 6"/><polyline points="2 18 22 18"/></svg>
+      Receipt
+    </button>
+    <button class="nav-btn" onclick="switchPage('pending')" id="nav-pending">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="nav-pending-badge" class="nav-badge" style="display:none">0</span>
+      Pending
+    </button>
+    <button class="nav-btn" onclick="switchPage('delivery')" id="nav-delivery">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="2.5"/><circle cx="5.5" cy="17.5" r="2.5"/><path d="M15 6H7v11.5"/><path d="M15 6l4 5.5v6H18"/><path d="M3 17.5H1V9l4-3h7v8"/></svg>
+      Delivery
+    </button>
+    <button class="nav-btn" onclick="switchPage('completed')" id="nav-completed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/><polyline points="20 11 9 22 4 17"/></svg>
+      Completed
+    </button>
+    <button class="nav-btn" onclick="switchPage('more')" id="nav-more">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      More
+    </button>
+  </nav>
+
+<!-- MODALS -->
+<div id="modal-overlay" style="display:none;"></div>
+
+<script>
+// ============================================================
+// BACKEND CONNECTION (self-hosted)
+// ============================================================
+const BACKEND_URL = 'http://172.22.152.234:3000'; // your WSL IP
+const socket = io(BACKEND_URL);
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  orderNo: 1,
+  orders: {},
+  drivers: ['THORN','DOM','POZZAL','ETC','EXTRA'],
+  spareCurrency: { code: 'IDR', symbol: 'Rp', rate: 4000 / 17000 },
+  notepad: '',
+};
+
+let currentPage = 'receipt';
+
+// ============================================================
+// SOCKET REAL-TIME UPDATES
+// ============================================================
+socket.on('orderChanged', ({ id, order }) => {
+  state.orders = state.orders || {};
+  state.orders[id] = order;
+  rerender();
+});
+
+socket.on('orderDeleted', (id) => {
+  if (state.orders && state.orders[id]) {
+    delete state.orders[id];
+    rerender();
+  }
+});
+
+socket.on('driversChanged', (drivers) => {
+  state.drivers = drivers;
+  rerender();
+});
+
+socket.on('spareCurrencyChanged', (currency) => {
+  state.spareCurrency = currency;
+  rerender();
+});
+
+socket.on('notepadChanged', (notepad) => {
+  state.notepad = notepad;
+  if (document.getElementById('notepad-input')) {
+    document.getElementById('notepad-input').value = notepad;
+    updateNotepad(); // recalc total
+  }
+});
+
+socket.on('orderNoChanged', (orderNo) => {
+  state.orderNo = orderNo;
+  updateOrderNoDisplay();
+});
+
+// ============================================================
+// INITIAL DATA LOAD
+// ============================================================
+async function loadInitialData() {
+  try {
+    // Fetch orders
+    let res = await fetch(`${BACKEND_URL}/api/orders`);
+    state.orders = await res.json();
+
+    // Fetch drivers
+    res = await fetch(`${BACKEND_URL}/api/drivers`);
+    state.drivers = await res.json();
+
+    // Fetch spare currency
+    res = await fetch(`${BACKEND_URL}/api/spareCurrency`);
+    state.spareCurrency = await res.json();
+
+    // Fetch notepad
+    res = await fetch(`${BACKEND_URL}/api/notepad`);
+    const { notepad } = await res.json();
+    state.notepad = notepad;
+    document.getElementById('notepad-input').value = notepad;
+
+    // Fetch order number
+    res = await fetch(`${BACKEND_URL}/api/orderNo`);
+    const { orderNo } = await res.json();
+    state.orderNo = orderNo;
+
+    rerender();
+    updateNotepad();
+  } catch (err) {
+    showToast('Failed to load data: ' + err.message);
+  }
+}
+loadInitialData();
+
+// ============================================================
+// RERENDER FUNCTION
+// ============================================================
+function rerender() {
+  updateOrderNoDisplay();
+  updateBadges();
+  if (currentPage === 'pending') renderPending();
+  if (currentPage === 'delivery') renderDelivery();
+  if (currentPage === 'completed') renderCompleted();
+}
+
+// ============================================================
+// PARSING (unchanged)
+// ============================================================
+function parsePrice(token) {
+  if (!token) return null;
+  token = token.trim().toLowerCase();
+  const kMatch = token.match(/^(\d+\.?\d*)(k)$/);
+  if (kMatch) return parseFloat(kMatch[1]) * 1000;
+  const rbMatch = token.match(/^(\d+\.?\d*)(rb|ribu)$/);
+  if (rbMatch) return parseFloat(rbMatch[1]) * 1000;
+  const numMatch = token.match(/^(\d+\.?\d*)$/);
+  if (numMatch) return parseFloat(numMatch[1]);
+  return null;
+}
+
+function parseOrderLine(line) {
+  line = line.trim();
+  if (!line) return null;
+
+  let qty = 1;
+  let name = '';
+  let price = null;
+
+  const qtyParenMatch = line.match(/^(.+?)\s*\((\d+)\)\s*(.+)$/);
+  if (qtyParenMatch) {
+    qty = parseInt(qtyParenMatch[2]);
+    const beforeParen = qtyParenMatch[1].trim();
+    const afterParen = qtyParenMatch[3].trim();
+    const p = parsePrice(afterParen);
+    if (p !== null) { price = p; name = beforeParen; }
+  }
+
+  if (price === null) {
+    const parts = line.split(/\s+/);
+    const lastToken = parts[parts.length - 1];
+    const p = parsePrice(lastToken);
+    if (p !== null) {
+      price = p;
+      const rest = parts.slice(0, -1).join(' ');
+      const qm = rest.match(/^(\d+)\s+(.+)$/);
+      if (qm) { qty = parseInt(qm[1]); name = qm[2]; }
+      else { name = rest; }
+    } else {
+      name = line;
+    }
+  }
+
+  return { line, name: name || line, price, qty, total: price !== null ? price * qty : null };
+}
+
+function parseItems(raw) {
+  return raw.split('\n').map(parseOrderLine).filter(Boolean);
+}
+
+function totalRiel(items) {
+  return items.reduce((s, it) => s + (it.total || 0), 0);
+}
+
+// ============================================================
+// FORMAT (unchanged)
+// ============================================================
+function fRiel(n) { return '៛' + n.toLocaleString('en-US'); }
+function fUSD(n) { return '$' + (n / 4000).toFixed(2); }
+function fSpare(n) {
+  const s = state.spareCurrency;
+  const val = n / s.rate;
+  if (s.code === 'IDR') return s.symbol + Math.round(val).toLocaleString('id-ID');
+  return s.symbol + val.toFixed(2);
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} ${d.getHours()>=12?'PM':'AM'}`;
+}
+
+function buildReceipt(order) {
+  const sep = '==============================';
+  const sep2 = '------------------------------';
+  const lines = [];
+  lines.push(`ORDER #${order.orderNo}`);
+  lines.push(formatDate(order.timestamp));
+  lines.push(sep);
+  if (order.customerName) lines.push(`CUSTOMER: ${order.customerName.toUpperCase()}`);
+  if (order.customerAddress) lines.push(`ADDRESS: ${order.customerAddress.toUpperCase()}`);
+  if (order.notes) lines.push(`NOTES: ${order.notes.toUpperCase()}`);
+  lines.push(sep);
+  lines.push('');
+  order.items.forEach(it => {
+    let line = '';
+    if (it.qty > 1) line = `- ${it.name} (${it.qty}) ${formatPrice(it.price)}`;
+    else if (it.qty === 1 && it.price !== null) line = `- ${it.name} ${formatPrice(it.price)}`;
+    else line = `- ${it.line}`;
+    lines.push(line);
+  });
+  lines.push('');
+  lines.push(sep);
+  const cnt = order.items.filter(i => i.price !== null).length;
+  lines.push(`ITEM COUNT: ${cnt}`);
+  lines.push(sep2);
+  const t = order.totalRiel;
+  lines.push(`TOTAL (RIEL): ${fRiel(t)}`);
+  lines.push(`TOTAL (USD): ${fUSD(t)}`);
+  lines.push(`TOTAL (${state.spareCurrency.code}): ${fSpare(t)}`);
+  lines.push(sep);
+  return lines.join('\n');
+}
+
+function formatPrice(p) {
+  if (p === null) return '';
+  if (p % 1000 === 0) return (p/1000) + 'k';
+  return p.toLocaleString('en-US');
+}
+
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('clock').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clock-date').textContent = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// RECEIPT TAB
+// ============================================================
+function updateOrderNoDisplay() {
+  document.getElementById('order-no-display').textContent = state.orderNo;
+  const settingsOrderNo = document.getElementById('settings-order-no');
+  if (settingsOrderNo) settingsOrderNo.textContent = `Current: #${state.orderNo}`;
+}
+
+async function acceptReceipt() {
+  const raw = document.getElementById('order-input').value.trim();
+  const customerName = document.getElementById('customer-name').value.trim();
+  const customerAddress = document.getElementById('customer-address').value.trim();
+  const notes = document.getElementById('order-notes').value.trim();
+
+  if (!raw) { showToast('Please enter order items'); return; }
+
+  const items = parseItems(raw);
+  const t = totalRiel(items);
+
+  try {
+    // Get current order number and increment
+    const res = await fetch(`${BACKEND_URL}/api/orderNo`);
+    const { orderNo } = await res.json();
+    const newOrderNo = orderNo + 1;
+
+    const order = {
+      id: Date.now().toString(),
+      orderNo: newOrderNo,
+      customerName,
+      customerAddress,
+      notes,
+      rawInput: raw,
+      items,
+      totalRiel: t,
+      timestamp: Date.now(),
+      status: 'pending',
+      isChecked: false,
+      isABA: false,
+      paymentType: 'cash',
+      assignedDriver: null,
+      splitPayment: null,
+    };
+
+    // Save order
+    await fetch(`${BACKEND_URL}/api/orders/${order.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
+
+    // Update order number on server
+    await fetch(`${BACKEND_URL}/api/orderNo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderNo: newOrderNo })
+    });
+
+    // Show preview
+    const preview = buildReceipt(order);
+    document.getElementById('receipt-preview-text').textContent = preview;
+    document.getElementById('receipt-preview-section').style.display = 'block';
+    document.getElementById('receipt-preview-section').scrollIntoView({ behavior: 'smooth' });
+
+    showToast('Order accepted! ✓');
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  }
+}
+
+function clearReceipt() {
+  document.getElementById('order-input').value = '';
+  document.getElementById('customer-name').value = '';
+  document.getElementById('customer-address').value = '';
+  document.getElementById('order-notes').value = '';
+  document.getElementById('receipt-preview-section').style.display = 'none';
+}
+
+function copyReceipt() {
+  const text = document.getElementById('receipt-preview-text').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Copied to clipboard!'))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('Copied to clipboard!');
+  } catch(e) {
+    showToast('Copy failed - please copy manually');
+  }
+  document.body.removeChild(ta);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  currentPage = page;
+  rerender();
+}
+
+// ============================================================
+// PENDING
+// ============================================================
+function renderPending() {
+  const pending = Object.values(state.orders).filter(o => o.status === 'pending');
+  document.getElementById('pending-badge').textContent = pending.length;
+
+  const list = document.getElementById('pending-list');
+  if (pending.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <p>No pending orders</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = pending.map(o => {
+    let cardClass = '';
+    if (o.isChecked) cardClass = 'checked';
+    if (o.isABA) cardClass = 'aba';
+    if (o.splitPayment) cardClass = 'split';
+    return `
+    <div class="order-card ${cardClass}" id="oc-${o.id}">
+      <div class="order-top">
+        <span class="order-no-badge">#${o.orderNo}</span>
+        <span class="order-total">${fRiel(o.totalRiel)}</span>
+      </div>
+      <div class="order-customer">${o.customerName || 'No name'}${o.customerAddress ? ' · ' + o.customerAddress : ''}</div>
+      ${o.splitPayment ? `<div style="font-size:11px;color:var(--purple);margin-bottom:6px">Split: Cash ${fRiel(o.splitPayment.cash)} / ABA ${fRiel(o.splitPayment.aba)}</div>` : ''}
+      <div class="order-actions">
+        <button class="icon-btn" onclick="toggleCheck('${o.id}')" title="Check">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${o.isChecked ? 'var(--green)' : 'var(--text-dim)'}" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        </button>
+        <button class="icon-btn" onclick="toggleABA('${o.id}')" title="ABA">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${o.isABA ? 'var(--blue)' : 'var(--text-dim)'}" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </button>
+        <button class="icon-btn" onclick="openSplitModal('${o.id}')" title="Split">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${o.splitPayment ? 'var(--purple)' : 'var(--text-dim)'}" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><polyline points="7 2 3 6 7 10"/><path d="M21 18H9"/><polyline points="17 14 21 18 17 22"/></svg>
+        </button>
+        <button class="icon-btn" onclick="moveToDelivery('${o.id}')" title="Delivery">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="18.5" cy="17.5" r="2.5"/><circle cx="5.5" cy="17.5" r="2.5"/><path d="M15 6H7v11.5"/><path d="M15 6l4 5.5v6H18"/><path d="M3 17.5H1V9l4-3h7v8"/></svg>
+        </button>
+        <button class="icon-btn" onclick="completeOrder('${o.id}')" title="Done">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <button class="icon-btn" onclick="deleteOrder('${o.id}')" title="Delete">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleCheck(id) {
+  const o = state.orders[id];
+  if (!o) return;
+  const updated = { ...o, isChecked: !o.isChecked };
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updated)
+  });
+}
+
+async function toggleABA(id) {
+  const o = state.orders[id];
+  if (!o) return;
+  const newIsABA = !o.isABA;
+  const updated = { ...o, isABA: newIsABA, paymentType: newIsABA ? 'aba' : 'cash' };
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updated)
+  });
+}
+
+async function deleteOrder(id) {
+  if (!confirm('Delete this order?')) return;
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, { method: 'DELETE' });
+}
+
+async function completeOrder(id) {
+  const o = state.orders[id];
+  if (!o) return;
+  if (!o.paymentType) o.paymentType = o.isABA ? 'aba' : 'cash';
+  const updated = { ...o, status: 'completed', paymentType: o.paymentType };
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updated)
+  });
+  showToast('Order completed!');
+}
+
+function moveToDelivery(id) {
+  openDriverModal(id);
+}
+
+function updateBadges() {
+  const pending = Object.values(state.orders).filter(o => o.status === 'pending').length;
+  const delivery = Object.values(state.orders).filter(o => o.status === 'delivery').length;
+  document.getElementById('pending-badge').textContent = pending;
+  document.getElementById('delivery-badge').textContent = delivery;
+  const nb = document.getElementById('nav-pending-badge');
+  nb.textContent = pending;
+  nb.style.display = pending > 0 ? 'flex' : 'none';
+}
+
+// ============================================================
+// DELIVERY
+// ============================================================
+function renderDelivery() {
+  const deliveryOrders = Object.values(state.orders).filter(o => o.status === 'delivery');
+  const list = document.getElementById('driver-list');
+
+  list.innerHTML = state.drivers.map((driver, di) => {
+    const dOrders = deliveryOrders.filter(o => o.assignedDriver === driver);
+    return `
+    <div class="driver-card">
+      <div class="driver-header">
+        <div class="driver-name-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="18.5" cy="17.5" r="2.5"/><circle cx="5.5" cy="17.5" r="2.5"/><path d="M15 6H7v11.5"/><path d="M15 6l4 5.5v6H18"/><path d="M3 17.5H1V9l4-3h7v8"/></svg>
+          <span style="font-weight:800;font-size:16px">${driver}</span>
+          <span class="badge" style="background:${dOrders.length > 0 ? 'var(--green)' : 'var(--border)'};color:${dOrders.length > 0 ? '#000' : 'var(--text-dim)'}">${dOrders.length}</span>
+        </div>
+        <button class="icon-btn" onclick="editDriverName(${di})" title="Edit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+      ${dOrders.length === 0 ? '<div class="driver-no-orders">No orders assigned</div>' :
+        dOrders.map(o => `
+          <div class="driver-order-item">
+            <div>
+              <div class="driver-order-name">#${o.orderNo} ${o.customerName || ''}</div>
+              <div class="driver-order-total">${fRiel(o.totalRiel)}</div>
+            </div>
+            <button class="driver-complete-btn" onclick="completeDelivery('${o.id}')">Done ✓</button>
+          </div>
+        `).join('')}
+    </div>`;
+  }).join('');
+}
+
+async function editDriverName(idx) {
+  const name = prompt('Enter driver name:', state.drivers[idx]);
+  if (name && name.trim()) {
+    const newDrivers = [...state.drivers];
+    newDrivers[idx] = name.trim().toUpperCase();
+    await fetch(`${BACKEND_URL}/api/drivers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ drivers: newDrivers })
+    });
+  }
+}
+
+async function completeDelivery(id) {
+  const o = state.orders[id];
+  if (!o) return;
+  if (!o.paymentType) o.paymentType = o.isABA ? 'aba' : 'cash';
+  const updated = { ...o, status: 'completed' };
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updated)
+  });
+  showToast('Delivery completed!');
+}
+
+// ============================================================
+// COMPLETED
+// ============================================================
+function renderCompleted() {
+  const completed = Object.values(state.orders).filter(o => o.status === 'completed');
+  completed.forEach(o => {
+    if (!o.paymentType) o.paymentType = o.isABA ? 'aba' : 'cash';
+  });
+
+  const cashTotal = completed.filter(o => o.paymentType === 'cash').reduce((s, o) => s + (o.splitPayment ? o.splitPayment.cash : o.totalRiel), 0);
+  const abaTotal = completed.filter(o => o.paymentType === 'aba').reduce((s, o) => s + (o.splitPayment ? o.splitPayment.aba : o.totalRiel), 0);
+  const checkerTotal = completed.filter(o => o.paymentType === 'checker').reduce((s, o) => s + o.totalRiel, 0);
+
+  document.getElementById('cash-total').textContent = fRiel(cashTotal);
+  document.getElementById('aba-total').textContent = fRiel(abaTotal);
+  document.getElementById('checker-total').textContent = fRiel(checkerTotal);
+
+  const list = document.getElementById('completed-list');
+  if (completed.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/><polyline points="20 11 9 22 4 17"/></svg>
+      <p>No completed orders</p>
+      <span>Finished orders will appear here</span>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = completed.map(o => {
+    const cls = o.paymentType === 'aba' ? 'aba' : (o.paymentType === 'checker' ? 'checker' : 'cash');
+    const paymentLabel = o.paymentType === 'aba' ? '💳 ABA' : (o.paymentType === 'checker' ? '🔍 Checker' : '💵 Cash');
+    return `<div class="completed-card ${cls}">
+      <div>
+        <div style="font-weight:700">#${o.orderNo} ${o.customerName || ''}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px">${paymentLabel}${o.splitPayment ? ' · Split' : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-weight:700;font-family:'JetBrains Mono',monospace">${fRiel(o.totalRiel)}</div>
+        <button class="icon-btn" onclick="editCompletedOrder('${o.id}')" title="Edit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="icon-btn" onclick="deleteCompletedOrder('${o.id}')" title="Delete">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editCompletedOrder(id) {
+  const o = state.orders[id];
+  if (!o) return;
+  openModal(`
+    <div class="modal-title">Edit Order #${o.orderNo}</div>
+    <input type="text" id="edit-name" placeholder="Customer name" value="${o.customerName || ''}" style="margin-bottom:8px">
+    <input type="text" id="edit-address" placeholder="Customer address" value="${o.customerAddress || ''}" style="margin-bottom:8px">
+    <input type="text" id="edit-notes" placeholder="Notes" value="${o.notes || ''}" style="margin-bottom:14px">
+    <div style="margin-bottom:12px">
+      <div class="sub-label" style="margin-bottom:6px">Payment type</div>
+      <div class="payment-radio-group">
+        <label class="payment-radio">
+          <input type="radio" name="paymentType" value="cash" ${o.paymentType === 'cash' ? 'checked' : ''}> 💵 Cash
+        </label>
+        <label class="payment-radio">
+          <input type="radio" name="paymentType" value="aba" ${o.paymentType === 'aba' ? 'checked' : ''}> 💳 ABA
+        </label>
+        <label class="payment-radio">
+          <input type="radio" name="paymentType" value="checker" ${o.paymentType === 'checker' ? 'checked' : ''}> 🔍 Checker
+        </label>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn-green" onclick="applyEditCompleted('${id}')">Save</button>
+      <button class="btn-red" onclick="closeModal()">Cancel</button>
+    </div>
+  `);
+}
+
+async function applyEditCompleted(id) {
+  const newName = document.getElementById('edit-name').value.trim();
+  const newAddress = document.getElementById('edit-address').value.trim();
+  const newNotes = document.getElementById('edit-notes').value.trim();
+  const paymentType = document.querySelector('input[name="paymentType"]:checked')?.value;
+  if (!paymentType) return;
+  const o = state.orders[id];
+  const updated = { ...o, customerName: newName, customerAddress: newAddress, notes: newNotes, paymentType, isABA: paymentType === 'aba' };
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updated)
+  });
+  closeModal();
+  showToast('Order updated');
+}
+
+async function deleteCompletedOrder(id) {
+  if (!confirm('Delete this completed order?')) return;
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, { method: 'DELETE' });
+  showToast('Order deleted');
+}
+
+function exportCompleted() {
+  const completed = Object.values(state.orders).filter(o => o.status === 'completed');
+  if (completed.length === 0) { showToast('No completed orders to export'); return; }
+  let txt = `=== COMPLETED ORDERS EXPORT ===\n${new Date().toLocaleString()}\n\n`;
+  txt += '--- SUMMARY ---\n';
+  completed.forEach(o => {
+    txt += `#${o.orderNo} ${o.customerName || 'N/A'} - ${fRiel(o.totalRiel)} [${o.paymentType}]\n`;
+  });
+  txt += '\n--- DETAILED ---\n\n';
+  completed.forEach(o => { txt += buildReceipt(o) + '\n\n'; });
+
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `completed-orders-${Date.now()}.txt`;
+  a.click();
+  showToast('Exported!');
+}
+
+// ============================================================
+// MORE TABS
+// ============================================================
+function switchMoreTab(tab) {
+  ['calculator','notepad','checker','settings'].forEach(t => {
+    document.getElementById('more-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+// ============================================================
+// CALCULATOR (local only)
+// ============================================================
+let calcState = { display: '0', first: null, op: null, justCalc: false };
+
+function calcInput(v) {
+  if (calcState.justCalc) { calcState.display = v; calcState.justCalc = false; }
+  else if (calcState.display === '0') calcState.display = v;
+  else calcState.display += v;
+  document.getElementById('calc-display').textContent = calcState.display;
+}
+
+function calcOp(op) {
+  calcState.first = parseFloat(calcState.display);
+  calcState.op = op;
+  calcState.justCalc = true;
+}
+
+function calcEquals() {
+  if (calcState.first === null || !calcState.op) return;
+  const a = calcState.first;
+  const b = parseFloat(calcState.display);
+  let result;
+  if (calcState.op === '+') result = a + b;
+  else if (calcState.op === '-') result = a - b;
+  else if (calcState.op === '*') result = a * b;
+  else if (calcState.op === '/') result = b !== 0 ? a / b : 'Error';
+
+  const history = `${a}${calcState.op}${b} = ${result}`;
+  document.getElementById('calc-history').textContent = history;
+  calcState.display = String(result);
+  document.getElementById('calc-display').textContent = calcState.display;
+  calcState.first = null;
+  calcState.op = null;
+  calcState.justCalc = true;
+}
+
+function calcClear() {
+  calcState = { display: '0', first: null, op: null, justCalc: false };
+  document.getElementById('calc-display').textContent = '0';
+  document.getElementById('calc-history').textContent = '';
+}
+
+function calcBackspace() {
+  if (calcState.display.length <= 1) calcState.display = '0';
+  else calcState.display = calcState.display.slice(0, -1);
+  document.getElementById('calc-display').textContent = calcState.display;
+}
+
+// ============================================================
+// NOTEPAD
+// ============================================================
+async function updateNotepad() {
+  const text = document.getElementById('notepad-input').value;
+  state.notepad = text;
+  await fetch(`${BACKEND_URL}/api/notepad`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notepad: text })
+  });
+  let total = 0;
+  text.split('\n').forEach(line => {
+    const m = line.trim().match(/(\d+\.?\d*)(k)$/i);
+    if (m) total += parseFloat(m[1]) * 1000;
+  });
+  document.getElementById('notepad-total').textContent = fRiel(total);
+}
+
+// ============================================================
+// CHECKER (unchanged)
+// ============================================================
+function checkOrders() {
+  const text = document.getElementById('checker-input').value.trim();
+  if (!text) return;
+
+  const lines = text.split('\n');
+  let html = '<div style="margin-bottom:8px"><b>Results</b>';
+
+  const items = lines.map(line => parseOrderLine(line.trim())).filter(Boolean);
+  const err = items.filter(i => i.price === null && i.line.trim()).length;
+  const est = totalRiel(items);
+
+  html += ` <span style="color:var(--red);font-size:12px">Errors: ${err}</span> &nbsp; <span style="color:var(--text-dim);font-size:12px">Estimate: ${fRiel(est)}</span></div>`;
+
+  items.forEach(it => {
+    if (!it.line.trim()) return;
+    if (it.price !== null) {
+      html += `<div class="checker-item ok"><div class="checker-item-name">${it.line}</div><div class="checker-item-price" style="color:var(--green)">${fRiel(it.total)}</div></div>`;
+    } else {
+      html += `<div class="checker-item err"><div class="checker-item-name">${it.line}</div><div class="checker-err-text">No price found or malformed</div></div>`;
+    }
+  });
+
+  document.getElementById('checker-results').innerHTML = html;
+}
+
+function clearChecker() {
+  document.getElementById('checker-input').value = '';
+  document.getElementById('checker-results').innerHTML = '';
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(html) {
+  const overlay = document.getElementById('modal-overlay');
+  overlay.innerHTML = `<div class="modal-box">${html}</div>`;
+  overlay.style.cssText = 'display:flex;position:fixed;inset:0;align-items:flex-end;justify-content:center;z-index:100;background:rgba(0,0,0,.7);';
+  overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
+}
+
+function closeModal() {
+  const overlay = document.getElementById('modal-overlay');
+  overlay.style.cssText = 'display:none;';
+  overlay.innerHTML = '';
+  overlay.onclick = null;
+}
+
+function openSplitModal(id) {
+  const o = state.orders[id];
+  if (!o) return;
+  openModal(`
+    <div class="modal-title">Split Payment - #${o.orderNo}</div>
+    <div style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Total: ${fRiel(o.totalRiel)}</div>
+    <input type="number" id="split-cash" placeholder="Cash amount (Riel)" style="margin-bottom:10px">
+    <input type="number" id="split-aba" placeholder="ABA amount (Riel)" style="margin-bottom:14px">
+    <div class="action-row">
+      <button class="btn-green" onclick="applySplit('${id}')">Confirm Split</button>
+      <button class="btn-red" onclick="closeModal()">Cancel</button>
+    </div>
+  `);
+}
+
+async function applySplit(id) {
+  const cash = parseFloat(document.getElementById('split-cash').value) || 0;
+  const aba = parseFloat(document.getElementById('split-aba').value) || 0;
+  const o = state.orders[id];
+  const updated = { ...o, splitPayment: { cash, aba } };
+  await fetch(`${BACKEND_URL}/api/orders/${id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updated)
+  });
+  closeModal();
+}
+
+function openDriverModal(id) {
+  openModal(`
+    <div class="modal-title">Assign to Driver</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${state.drivers.map(d => `
+        <button onclick="assignDriver('${id}','${d}')" style="background:var(--card2);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;padding:14px;border-radius:10px;cursor:pointer;text-align:left">
+          🚴 ${d}
+        </button>
+      `).join('')}
+    </div>
+    <button class="btn-red" style="width:100%;margin-top:14px;justify-content:center" onclick="closeModal()">Cancel</button>
+  `);
+}
+
+async function assignDriver(orderId, driver) {
+  const o = state.orders[orderId];
+  const updated = { ...o, status: 'delivery', assignedDriver: driver };
+  await fetch(`${BACKEND_URL}/api/orders/${orderId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updated)
+  });
+  closeModal();
+  showToast(`Assigned to ${driver}`);
+}
+
+function openOrderNoModal() {
+  openModal(`
+    <div class="modal-title">Order Number</div>
+    <div style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Current order number: <b style="color:var(--text)">#${state.orderNo}</b></div>
+    <input type="number" id="new-order-no" placeholder="New order number" value="${state.orderNo}" style="margin-bottom:14px">
+    <div class="action-row">
+      <button class="btn-green" onclick="applyOrderNo()">Save</button>
+      <button class="btn-red" onclick="resetOrderNo()">Reset to 1</button>
+    </div>
+    <button onclick="closeModal()" style="background:none;border:none;color:var(--text-dim);font-family:'Syne',sans-serif;font-size:13px;margin-top:12px;cursor:pointer;display:block;width:100%;text-align:center">Cancel</button>
+  `);
+}
+
+async function applyOrderNo() {
+  const v = parseInt(document.getElementById('new-order-no').value);
+  if (v > 0) {
+    await fetch(`${BACKEND_URL}/api/orderNo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderNo: v })
+    });
+    closeModal();
+  }
+}
+
+async function resetOrderNo() {
+  await fetch(`${BACKEND_URL}/api/orderNo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderNo: 1 })
+  });
+  closeModal();
+  showToast('Order number reset to 1');
+}
+
+function openCurrencyModal() {
+  const s = state.spareCurrency;
+  const rateDisplay = s.code === 'IDR' ? 17000 : (4000 / s.rate).toFixed(0);
+  openModal(`
+    <div class="modal-title">Spare Currency</div>
+    <input id="curr-code" placeholder="Currency code (e.g. IDR, EUR)" value="${s.code}" style="margin-bottom:10px">
+    <input id="curr-symbol" placeholder="Symbol (e.g. Rp, €)" value="${s.symbol}" style="margin-bottom:10px">
+    <input id="curr-rate" type="number" placeholder="Rate: 1 USD = ? currency" value="${rateDisplay}" style="margin-bottom:14px">
+    <div class="action-row">
+      <button class="btn-green" onclick="applyCurrencyFromModal()">Save</button>
+      <button class="btn-red" onclick="closeModal()">Cancel</button>
+    </div>
+  `);
+}
+
+async function applyCurrencyFromModal() {
+  const code = document.getElementById('curr-code').value.trim().toUpperCase();
+  const symbol = document.getElementById('curr-symbol').value.trim();
+  const usdRate = parseFloat(document.getElementById('curr-rate').value);
+  if (code && symbol && usdRate > 0) {
+    const rate = 4000 / usdRate;
+    await fetch(`${BACKEND_URL}/api/spareCurrency`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, symbol, rate })
+    });
+    closeModal();
+    showToast('Currency updated!');
+  }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+// ============================================================
+// SETTINGS CURRENCY DISPLAY
+// ============================================================
+function updateCurrencyDisplay() {
+  const s = state.spareCurrency;
+  const usdEquiv = Math.round(4000 / s.rate);
+  const settingsCurrencySub = document.getElementById('settings-currency-sub');
+  if (settingsCurrencySub) {
+    settingsCurrencySub.textContent = `${s.code} (${s.symbol}) - 1 USD = ${usdEquiv.toLocaleString()} ${s.code}`;
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+rerender();
+updateCurrencyDisplay();
+</script>
+</body>
+</html>
