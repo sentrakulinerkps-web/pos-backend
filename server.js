@@ -204,7 +204,7 @@ app.post('/api/notepad', (req, res) => {
 });
 
 // ---------- Start server ----------
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+  console.log(`Backend running on port ${PORT}`);
 });
